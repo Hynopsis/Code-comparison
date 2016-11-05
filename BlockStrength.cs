@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading; 
+using System.Threading;
+using System.Linq;    
 
 #pragma warning disable 0168// variable declared but not used.
 #pragma warning disable 0219// variable assigned but not used.
@@ -15,7 +16,7 @@ public float checkAroundPathWait = 0;
 public float strCheckWait = 10;
 public RenderGroup ourRender;
 
-public bool split = false;
+public bool split = false; 
 public bool waitingToRender = false;
 public bool gettingAllMissing = false;
 public bool checkingNewStrength = false;
@@ -685,7 +686,7 @@ public byte BlockStr(Vector3 thisPosition, bool onTerrain){//take the voxel posi
 					*/
 					//shit switching to larger scale means this number is not right...on edge of chunk since using real position
 					//it will find -47 which needs to be divided by 3 and rounded down...
-					Debug.Log(thisPosition + " " + posAroundBlock[x] + " " + combinedLocal + " " + chunkParent[x] + " " + chunkPosition[x]);
+					//Debug.Log(thisPosition + " " + posAroundBlock[x] + " " + combinedLocal + " " + chunkParent[x] + " " + chunkPosition[x]);
 
 					
 					if(blockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y,(int)chunkPosition[x].z].strength > possibleStrength){//then this block could pass strength
@@ -728,8 +729,17 @@ public byte BlockStr(Vector3 thisPosition, bool onTerrain){//take the voxel posi
 
 			//blockStr[x1,y1,z1][0] = 0;
 			doingStrength = false;
-			//Debug.Log("Not finding any strength");
-			return 0;
+
+                //Debug.Log("Not finding any strength");
+
+               // if (thisPosition == new Vector3(10, 15, 13))
+               // {
+                    //bdebug
+                   // Debug.Log("Position (10,15,13) no strength " + blockStr[x1, y1, z1].strength + "in direction " + blockStr[x1, y1, z1].direction + " length " + blockStr[x1, y1, z1].length);
+                    //Debug.Break();
+               // }
+
+                return 0;
 			//so if we have found nothing to link either around us, or below us...then we add no strength			
 				
 			}
@@ -789,28 +799,28 @@ public byte BlockStr(Vector3 thisPosition, bool onTerrain){//take the voxel posi
 
 				
 				}
-			
-			if(terrainScript.strDebug){
+
+
+                if (thisPosition == new Vector3(10, 15, 13))
+                {
+                    //bdebug
+                    Debug.Log("Position (10,15,13) FINDING strength " + blockStr[x1, y1, z1].strength + "in direction " + blockStr[x1, y1, z1].direction + " length " + blockStr[x1, y1, z1].length);
+                    //Debug.Break();
+                }
+
+                if (terrainScript.strDebug){
 			Debug.Log("Getting through this check ");
 			}
 			assigning = false;
 			}
-	}
+	    }
 	
 	
-		
-//		if(	blockStr[(int) thisPosition.x, (int) thisPosition.y, (int) thisPosition.z][0] == 8 && blockStr[(int) thisPosition.x, (int) thisPosition.y, (int) thisPosition.z].Count < 2){
-//			Debug.Log("Got a problem here");
-//			Debug.DrawLine(transform.position + thisPosition, (transform.position + thisPosition + (Vector3.up + Vector3.right + Vector3.forward) * 5.2f), Color.black, 1.25f);
-//			
-		//if(blockStr[x1,y1,z1]
-		//Debug.Log("finishing with block strength " + chunkScript);	
-		//chunkScript.GetVegeInfo(thisPosition);
 
 		doingStrength = false;	
 		//so we are going to return byte of 1 if we found some strength, 0 if nothing is found.
 
-//		bhange
+
 		if(blockStr[(int) thisPosition.x, (int) thisPosition.y, (int) thisPosition.z].strength == 0){
 			
 			return 0;
@@ -818,15 +828,7 @@ public byte BlockStr(Vector3 thisPosition, bool onTerrain){//take the voxel posi
 		else{
 			return 1;
 			}
-
-//		if(blockStr[(int) thisPosition.x, (int) thisPosition.y, (int) thisPosition.z][0] == 0){
-//			
-//			return 0;
-//			}
-//		else{
-//			return 1;
-//			}
-		
+        
 
 	}
 
@@ -888,6 +890,7 @@ public IEnumerator AddStrength(Vector3 thisPosition, bool onTerrain){
 		
 	//yield return null;	
 	}
+
 public void CheckAroundPass(GameObject caller, Vector3 thisPosition){
 	doingPass = true;	
 	BlockStrength thisStrength;
@@ -1095,24 +1098,28 @@ public void CheckAroundPass(GameObject caller, Vector3 thisPosition){
 	doingPass = false;	
 	}
 	
-	
-	
-//so for updating multiples...terrain gen will have a bnuch of lists that collected all bad foundations and stuff
-//these with probably need there own lists to work with for processing, though wish I could reuse some existing lists
 public IEnumerator BlockPieces(bool enableOnRender){//so this determines single blocks and grouped blocks for falling
 		
 	//PROBABLY DOENST NEED TO BE AN ENUM BUT NEED FOR YIELDS IN DEBUGGING	
-	//so any values found and processed through mass, will end up on these lists for us to work with as falling blocks
+	//so any values found and processed through UpdateStrength, will end up on these lists for us to work with as falling blocks
 
-	//so we are implimenting a method to make pieces break into smaller pieces, to reduce lag and cause cooler destructions
-	//we will use this split bool to detemine when to start spliting based on a random number
-	//Random rand = new Random();
 	int randomNumber;
 	split = false;
-	int splitCheck = 0;
-	//think there was a problem where not all 255s getting cleared, since only our chunkPass lists were getting cleared
-	//and nothe surround blocks on positions and parents lists...
+	int splitCheck = 0; 
+
 	int blocksChecked = 0;
+
+    Debug.Log("Total on list for blockpieces " + chunkPassPos.Count);
+
+    if (terrainScript.blockPiecePosDebug){
+
+        for (int x = 0; x < chunkPassPos.Count; x++){
+            terrainScript.DebugCube(chunkPassPos[x] * 3, chunkPassGo[x].transform.position, 1, Color.red, .1f);
+        }
+        Debug.Log("Debugged all blockpiece positions chekc blockscript" + chunkPassPos.Count);
+        Debug.Break();
+        yield return new WaitForSeconds(.1f);
+    }
 
 	for (int x = 0; x < chunkPassPos.Count; x++){
         //Debug.Log("Checking this on BlockPieces " + chunkPassPos[x]);
@@ -1129,8 +1136,8 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 			//if already been processed ( or == 255 - then this has already been added to position/parent list for final block fall
 			continue;
 			}
-
-		randomNumber = Random.Range(5,20);//create a random number of when to split our chunks	
+        //disabling this for debugging
+        randomNumber = Random.Range(5,16);//create a random number of when to split our chunks	
 	
 		GetAroundInfo(chunkPassPos[x], chunkPassGo[x]);//overidden methods for calling getaroundinfo on another chunk
 
@@ -1140,8 +1147,6 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 		if(FindConnected(chunkPassPos[x], chunkPassGo[x])){
 
 			//so this method returns true only if we found a connecting falling block around us...
-
-
 			if(chunkPassGo[x] == gameObject){//flag to 255 since we have already done connections for this block...
 				blockStr[(int)chunkPassPos[x].x, (int)chunkPassPos[x].y, (int)chunkPassPos[x].z].strength = 255;
 				}
@@ -1151,8 +1156,7 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 					
 			//if we found something conencted they will be added to positionList and parentList from findconnected, so we need to check them
 			//to find other connected blocks... which keep adding to positionList and parentList until we have all conencted...
-			//if a block is marked 255, then it is alredy processed so move to the next
-			
+			//if a block is marked 255, then it is alredy processed so move to the next			
 						
 			for (int i = 0; i < positionList.Count; i ++){
 				splitCheck +=1;
@@ -1188,28 +1192,17 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 			parentList.Add(chunkPassGo[x]);
 			positionList.Add(chunkPassPos[x]);
 
-            //Debug.Log("Orignal position " + chunkPassPos[x]);
-			//in current method we pass these back to the terrain generator that is waiting for us to finish...
-			//the terrain gen want a gameObject that is passed for rendering, so we need a custom class that holds our blockpiece information	
-			//so create the object and add to the list
-			//Debug.Log ("Finding chunk to fall");
-
 			GameObject blockFall = Instantiate(terrainScript.blockFall, transform.position, transform.rotation) as GameObject; 	
-			//Debug.Log(" are these the same " + transform.position +  " " + blockFall.transform.position);
 			BlockFall bScript = blockFall.GetComponent<BlockFall>() as BlockFall;
 			bScript.terrainScript = terrainScript;//so this block doestn have to call Gameobject.Find methods
-			//bScript.blockPooler = terrainScript.objectPoolerBlock;
 			
 			//add this to list of positions that need to be cleared from 255
 			//after this iteration, the list get cleared and repopulated so add to final list
 			finalPositions.AddRange (positionList);
 			finalParents.AddRange (parentList);
-			//Debug.Log("check final positions or positions list on block strength");
-			//Debug.Break();
-			//yield return null;
 
-			//before we add the positions to the list, we need to convert all teh positions to us locally
-			//for meshing eveyrthing needs to be computed relative ot the meshing object
+			//before we add the positions to the list, we need to convert all the positions to us locally
+			//for meshing eveyrthing needs to be computed relative to the meshing object
 			for (int i = 0; i < positionList.Count; i ++){
 				
 				if(parentList[i] == gameObject){
@@ -1218,60 +1211,20 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 				else{
 					//this position resides in another chunk...convert its position to being local to us instead
 
-					//these outside chunk need to account for new scale of 3
-					//Vector3 finalPos = positionList[i];
-					//this is not working, position list is being converted non-properly
-
-
 					positionList[i] =	((positionList[i] * 3) + parentList[i].transform.position - gameObject.transform.position)/3;
-					//positionList[i] = positionList[i]/3;
 					
 					Vector3 finalPos = positionList[i];
-						/*
-						if(finalPos.x > 15){
-							
-							finalPos.x = Mathf.FloorToInt(finalPos.x/3);
-							//Debug.Log("Combined local " + combinedLocal.x);
-						}
-						if(finalPos.y > 15){
-							finalPos.y = Mathf.FloorToInt(finalPos.y/3);
-							
-						}
-						if(finalPos.z > 15){
-							finalPos.z = Mathf.FloorToInt(finalPos.z/3);
-							
-						}
-						
-						if(finalPos.x < 0){
-							
-							finalPos.x = 0;
-							//Debug.Log("Combined local " + combinedLocal.x);
-						}
-						if(finalPos.y < 0){
-							finalPos.y = 0;
-							
-						}
-						if(finalPos.z > 15){
-							finalPos.z = 0;
-							
-						}
-						*/
-
-						positionList[i] = finalPos;
+					positionList[i] = finalPos;
 				}
-				}
-				Debug.Log("check positions again");
-				//Debug.Break();
-				//yield return null;
-			//Debug.Log("Check positionsList these are converted to our positions ");
+			}
+            
 			//Add the positions at this gameobject..
 			//this gameobject holds a big array for all the information about these blocks...
 			if(!enableOnRender){//then this is a group of blocks and needs to be enabled in sequence
 
-				bScript.voxelPosList.AddRange(positionList);
-				bScript.MinimizeArrays();
-				//Debug.Log(" BLocks added to voxelpos list " + positionList.Count + " added " + bScript.voxelPosList.Count);
-						
+				bScript.voxelPosList.AddRange(positionList);    //adding these positiont to this debris gameobject
+				bScript.MinimizeArrays();                       //this finds the minimal size of the array needed to hold all these positions, for memory mangement
+				//Debug.Log(" BLocks added to voxelpos list " + positionList.Count + " added " + bScript.voxelPosList.Count);						
 				terrainScript.foundationUpdateGoList.Add(blockFall);
 				}
 			else if(ourRender != null){//this is for updatestrengthsingle calls, this render is what we need to add it to
@@ -1279,14 +1232,12 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 				bScript.voxelPosList.AddRange(positionList);
 				bScript.MinimizeArrays();
 				Debug.Log(" Just  " + positionList.Count + " added " + bScript.voxelPosList.Count);
+                //ourRender is a custom objects that holds a bunch of objects to be rendered
 				ourRender.renderOrder.Add(blockFall);
 
 				}
 			else{//this is result from removing a single block so enable immediately...
 				//we add the positions to this blockpiece, then call minimize arrays and it will get ready for rendering
-
-				//we need to remove the original position from this list, do not know why it is on here...
-
 				bScript.voxelPosList.AddRange(positionList);
 				bScript.MinimizeArrays();
 					//Debug.Log(" BLocks added to voxelpos list " + positionList.Count + " added " + bScript.voxelPosList.Count);
@@ -1322,11 +1273,9 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 
 			if(chunkPassGo[x] == gameObject){
 				//then this position is already local to us
-				//continue;
 				}
 			else{
 				//this position resides in another chunk...convert its position to being local to us instead
-                    //NOT SO SURE THS NEEDS TO BE CONVERTED
 				chunkPassPos[x] = ((chunkPassPos[x] * 3) + chunkPassGo[x].transform.position - gameObject.transform.position)/3;
 				}
 									
@@ -1336,49 +1285,34 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 					GameObject blockFall = Instantiate(terrainScript.blockFall, transform.position, transform.rotation) as GameObject; 	
 					BlockFall bScript = blockFall.GetComponent<BlockFall>() as BlockFall;
 					bScript.terrainScript = terrainScript;//so this block doestn have to call Gameobject.Find methods
-					//bScript.blockPooler = terrainScript.objectPoolerBlock;
-					//Vector3 posSave = chunkPassPos[x];
 
 					bScript.voxelPosList.Add(chunkPassPos[x]);
 					bScript.MinimizeArrays();
 					terrainScript.foundationUpdateGoList.Add(blockFall);
 					}
-				//terrainScript.updateSolidPiece.Add(blockFall);
 			}
 			else if(ourRender != null){//this is for updatestrengthsingle calls, this render is what we need to add it to
 					
+                    GameObject blockFall = Instantiate(terrainScript.blockFall, transform.position, transform.rotation) as GameObject; 	
+					BlockFall bScript = blockFall.GetComponent<BlockFall>() as BlockFall;
+					bScript.terrainScript = terrainScript;//so this block doestn have to call Gameobject.Find methods
 
+					bScript.voxelPosList.Add(chunkPassPos[x]);
+					bScript.MinimizeArrays();
+					Debug.Log(" ADDING TO NEW RENDERPIECE " + positionList.Count + " added " + bScript.voxelPosList.Count + " renderOrder " + ourRender.renderOrder.Count);
 
-						GameObject blockFall = Instantiate(terrainScript.blockFall, transform.position, transform.rotation) as GameObject; 	
-						BlockFall bScript = blockFall.GetComponent<BlockFall>() as BlockFall;
-						bScript.terrainScript = terrainScript;//so this block doestn have to call Gameobject.Find methods
-						//bScript.blockPooler = terrainScript.objectPoolerBlock;
-						//Vector3 posSave = chunkPassPos[x];
-
-						bScript.voxelPosList.Add(chunkPassPos[x]);
-						bScript.MinimizeArrays();
-						Debug.Log(" ADDING TO NEW RENDERPIECE " + positionList.Count + " added " + bScript.voxelPosList.Count + " renderOrder " + ourRender.renderOrder.Count);
-
-						ourRender.renderOrder.Add (blockFall);
-
-
-					//Debug.Log(" ADDING TO NEW RENDERPIECE " + positionList.Count + " added " + bScript.voxelPosList.Count + " renderOrder " + ourRender.renderOrder.Count);
-					//
+					ourRender.renderOrder.Add (blockFall);
 				}
 			else{//this is result from removing a single block so enable immediately...
 				//we add the positions to this blockpiece, then call minimize arrays and it will get ready for rendering
 				GameObject blockFall = Instantiate(terrainScript.blockFall, transform.position, transform.rotation) as GameObject; 	
 				BlockFall bScript = blockFall.GetComponent<BlockFall>() as BlockFall;
 				bScript.terrainScript = terrainScript;//so this block doestn have to call Gameobject.Find methods
-				//bScript.blockPooler = terrainScript.objectPoolerBlock;
-				
 
 				bScript.voxelPosList.Add(chunkPassPos[x]);
 				bScript.MinimizeArrays();
-				//Debug.Log(" BLocks added to voxelpos list " + positionList.Count + " added " + bScript.voxelPosList.Count);
-				
+
 				terrainScript.updateSolidPiece.Add(blockFall);
-				
 			}
 				chunkPassPos[x] = posSave;
 					
@@ -1398,6 +1332,7 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 	finalPositions.AddRange(chunkPassPos);
 
 	for (int x = 0; x < finalPositions.Count; x++){
+
 			blockScript = finalParents[x].GetComponent<BlockStrength>() as BlockStrength;
 			chunkScript = finalParents[x].GetComponent<ChunkScript>() as ChunkScript;
 
@@ -1415,18 +1350,18 @@ public IEnumerator BlockPieces(bool enableOnRender){//so this determines single 
 		}
 
 	if(ourRender != null){
-			Debug.Log("Passing data ot our Render Group " + ourRender.renderOrder.Count);
+	    //Debug.Log("Passing data ot our Render Group " + ourRender.renderOrder.Count);
 
 
 		}
-	//Debug.Log("Found " + positionList.Count + " number of blocks total to fall + single fall blocks .... original " + chunkPassPos.Count);
+	Debug.Log("Found " + positionList.Count + " number of blocks total to fall + single fall blocks .... original " + chunkPassPos.Count);
 	chunkPassPos.Clear();
 	chunkPassGo.Clear();
 	positionList.Clear();
 	parentList.Clear();
 	finalParents.Clear();
 	finalPositions.Clear ();
-	//Debug.Break();
+    //Debug.Break();
 	yield return null;	
 
 		
@@ -1602,74 +1537,69 @@ public bool FindConnected (Vector3 posInArray, GameObject parent){
 		
 	}
 
-	public IEnumerator UpdateStrengthSingle(GameObject singleObject, Vector3 singlePosition, RenderGroup thisRender){//GameObject singleObject, Vector3 singlePosition
+    public IEnumerator UpdateStrengthSingle(GameObject singleObject, Vector3 singlePosition, RenderGroup thisRender) {//GameObject singleObject, Vector3 singlePosition
 
-		ourRender = thisRender;
-		Debug.Log("Doing updatestrength single at position " + singlePosition);
-		Debug.Log("Strength " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].strength + " direction " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].direction + " length " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].length);
+        //so this is called from removal of single blocks, but may effect any number of blocks and any number of other chunks
 
-		updateFoundationGo.Clear();
-		updateFoundationPos.Clear();
-		fullChunkList.Clear();
-		
-		if(!initialized){//missing references and array allocations
-			Initialize();
-		}
-					
-		updatingStrength = true;
-			
-		//update single strength at the point that has been called...
-		yield return StartCoroutine(UpdateStrength(singlePosition, false, true));
-		//when this is done it will have the pass arrays filled with gameobject and positions
-		//not sure this necessary below, do a test...
+        ourRender = thisRender;
+        Debug.Log("Doing updatestrength single at position " + singlePosition);
+        //Debug.Log("Strength " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].strength + " direction " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].direction + " length " + blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].length);
 
-		//if removing a single block through normal block removal it need to remove the block clicked on
-		//if this is through digging, then we dont want to remove the spot...
-		if(singleObject == gameObject){
+        //clear our lists, these are list of other effected chunks in this removal
+        updateFoundationGo.Clear();
+        updateFoundationPos.Clear();
+        fullChunkList.Clear();
 
-			//Debug.Log("Clearing our own spot " + singlePosition + " " +  singleObject.transform.position);
-			blockScript = GetComponent<BlockStrength>() as BlockStrength;
-			chunkScript  = GetComponent<ChunkScript>() as ChunkScript;
-			//clear the block that is being removed so doesnt group as a falling block...
-		
-			//so need to set from 50 to zero so it is removed if we remove the blocks
-            ourChunkScript.vegeByte[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z] = 0;
-			blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].strength = 0;
-			blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].direction = 7;
-			blockStr[(int) singlePosition.x, (int) singlePosition.y, (int) singlePosition.z].length = 0;
+        if (!initialized) {//missing references and array allocations, not sure this is possible
+            Initialize();
+        }
 
-			}
-		else{
-            Debug.Log("Whats going on here this should not be");
-            Debug.Break();
+        updatingStrength = true;
 
-		}
-
-			//before we call this we problably have ot clear that spot that is being removed and weas sent to us
-
-			float startTime = Time.realtimeSinceStartup;
-			yield return StartCoroutine(BlockPieces(true));//so this method needs to return block pieces to a 
+        //update single strength at the point that has been called...
 
 
-		for(int p = 0; p < thisRender.renderOrder.Count; p++){
+        yield return StartCoroutine(UpdateStrength(singlePosition, false, true));
+        //when this is done it will have the pass arrays filled with gameobject and positions
 
-		Debug.Log("Positions of renderOrder " + thisRender.renderOrder[p].transform.position);
+        //Debug.Log("Clearing our own spot " + singlePosition + " " +  singleObject.transform.position);
+        blockScript = GetComponent<BlockStrength>() as BlockStrength;
+        chunkScript = GetComponent<ChunkScript>() as ChunkScript;
+        //clear the block that is being removed so doesnt group as a falling block...
 
-			}
-			
-			Debug.Log("REturning from blockPieces single  in " + (Time.realtimeSinceStartup - startTime));
-			Debug.Log("So our CUSTOM BLOCK piece has " + thisRender.renderOrder.Count);
-			updatingStrength = false;
-		//thisRender.Add(single
-			//if(thisRender.renderOrder.Count != 0){
-			terrainScript.orderedRenderList.Add(thisRender);
-				//Debug.Log("So our CUSTOM BLOCK piece has " + thisRender.renderOrder.Count);
-				//}
-			//else{
-				//thisRender = null;
+        //so need to set from 50 to zero so it is removed if we remove the blocks
+        ourChunkScript.vegeByte[(int)singlePosition.x, (int)singlePosition.y, (int)singlePosition.z] = 0;
+        blockStr[(int)singlePosition.x, (int)singlePosition.y, (int)singlePosition.z].strength = 0;
+        blockStr[(int)singlePosition.x, (int)singlePosition.y, (int)singlePosition.z].direction = 7;
+        blockStr[(int)singlePosition.x, (int)singlePosition.y, (int)singlePosition.z].length = 0;
 
-				//}
-			ourRender = null;
+        float startTime = Time.realtimeSinceStartup;
+        yield return StartCoroutine(BlockPieces(true));//so this method creates ALL the falling pieces from this block removal and adds to thisRender object
+
+
+        //so not the best way to do it, but for clarity we need to check all effected chunks and see if they have any water
+        //if they do, then they need to be resimulated.
+        /*
+        for(int x = 0; x < thisRender.renderOrder.Count; x++)
+        {
+
+            if(thisRender.renderOrder[x].layer == )
+            workingChunk = currentChunks[x];
+            workingChunkPosition = currentChunks[x].transform.position;          //for threading since cant use transform
+            workingScript = workingChunk.GetComponent<ChunkScript>();
+
+            if (!workingScript.surfaceSimulated)
+            {
+                //so if this is teh first time, since loaded, that chunk has done water, capacities need to be initialized
+                yield return StartCoroutine(CheckSurfaceWater(workingChunk, workingScript, "Simulate current chunks"));
+            }
+
+        }
+        */
+
+        updatingStrength = false;
+		terrainScript.orderedRenderList.Add(thisRender);
+		ourRender = null;
 			
 			
 		}
@@ -1721,12 +1651,26 @@ public bool FindConnected (Vector3 posInArray, GameObject parent){
 		updateFoundationPos.AddRange(terrainScript.foundationUpdatePosList);
 		
 		updatingStrength = true;
-		//so for each entry just call updateStrength, lengthy method there is surely a faster way...
-		//will have to revisit multi method, for speed
+            //so for each entry just call updateStrength, lengthy method there is surely a faster way...
+            //will have to revisit multi method, for speed
+
+            if (terrainScript.debugDugBlocks)
+            {
+                for (int x = 0; x < updateFoundationPos.Count; x++)
+                {//go through and debug all block positions that are effected in this dig
+                    terrainScript.DebugCube((updateFoundationPos[x] * 3), updateFoundationGo[x].transform.position, 1.1f, Color.red, .1f);
 
 
 
-		for(int x = 0; x < updateFoundationPos.Count; x++){
+                }
+
+                Debug.Log("Marked all effect block in red on UpdateStrengthMass");
+                Debug.Break();
+                yield return new WaitForSeconds(.1f);
+            }
+
+
+                for (int x = 0; x < updateFoundationPos.Count; x++){
 			
 			//there is no guarentee that chunkScript will be set...?
 			if(updateFoundationGo[x] == gameObject){//then call on our gameobject
@@ -1777,17 +1721,23 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		//this method check the 6 positions around us to see who is missing their path because they depended on 
 		//us for strength, it creates an array for the parents of these positions 
 		CheckAroundPath(gameObject, thisPosition);//check to see if we are missing paths
-		//terrainScript.DebugCube(thisPosition,transform.position, 1.1f, Color.red, .1f);
-		//yield return null;
-		//Debug.Break();
+
+        if (terrainScript.checkAroundDebug) { //then we want to pause the editor for viewing
+            Debug.Break();
+            yield return new WaitForSeconds(.1f);   //this is how long we are displaying the around data
+        }
+        
 		gettingAllMissing = true;
 		
+        //this might be causing problems, just because above chunk is foundation and we are too, doesnt mean we should change them
 		if(foundationCheck){//not sure this is ever used...
-		//so this is a foundation block is placed under another foundation block...to clears the above block by setting us to zero...to find the chain effected...
+		//so this is a foundation block that is placed under another foundation block...to clears the above block by setting us to zero...to find the chain effected...
 			//bhange  ****may have to look into this , not sure what we are doing here
 			blockStr[(int)thisPosition.x, (int)thisPosition.y, (int)thisPosition.z].strength = 8;
 			blockStr[(int)thisPosition.x, (int)thisPosition.y, (int)thisPosition.z].direction = 7;
 			blockStr[(int)thisPosition.x, (int)thisPosition.y, (int)thisPosition.z].length = 0;
+
+            
 			}
 
 		//sets their strength to zero and finds all that rely on this path
@@ -1796,8 +1746,10 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		int totalCounter = 0;
 		
 		for(int x = 0; x < chunkAroundPos.Count; x++){ 
+
 			fullCounter +=1;
 			totalCounter += 1;
+
 			if(chunkAroundGo[x] == gameObject){//then we recheck ours
 
 				blockStr[(int) chunkAroundPos[x].x,(int) chunkAroundPos[x].y, (int) chunkAroundPos[x].z].strength = 0;
@@ -1805,21 +1757,22 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 				blockStr[(int) chunkAroundPos[x].x,(int) chunkAroundPos[x].y, (int) chunkAroundPos[x].z].length = 0;
 		
 				CheckAroundPath(gameObject, chunkAroundPos[x]);
-				//terrainScript.DebugCube(chunkAroundPos[x],transform.position, 1.1f, Color.red, .08f);
-				/*STRDEBUG
-				Debug.Log("Around info collected for checkAroundPath, see inspector");
-				Debug.Break();
-				yield return new WaitForSeconds(.1f);
-				yield return null;
-				*/
-				}
+
+                if (terrainScript.checkAroundDebug)
+                { //then we want to pause the editor for viewing
+                    Debug.Break();
+                    yield return new WaitForSeconds(.1f);   //this is how long we are displaying the around data
+                }
+            }
 			else{
+
 				blockScript = chunkAroundGo[x].GetComponent<BlockStrength>() as BlockStrength;
 				blockScript.doingPath = true;
 			
 				blockScript.blockStr[(int) chunkAroundPos[x].x,(int) chunkAroundPos[x].y, (int) chunkAroundPos[x].z].strength = 0;
 				blockScript.blockStr[(int) chunkAroundPos[x].x,(int) chunkAroundPos[x].y, (int) chunkAroundPos[x].z].direction = 7;
 				blockScript.blockStr[(int) chunkAroundPos[x].x,(int) chunkAroundPos[x].y, (int) chunkAroundPos[x].z].length = 0;
+
 				blockScript.CheckAroundPath(gameObject, chunkAroundPos[x]);
 				//terrainScript.DebugCube(chunkAroundPos[x],chunkAroundGo[x].transform.position, 1.1f, Color.red, .08f);
 				//Debug.Log("Around info collected for checkAroundPath, see inspector");
@@ -1828,12 +1781,13 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 				while(blockScript.doingPath){
 					yield return new WaitForSeconds(.001f); 
 					}
-				/*STRDEBUG
-				Debug.Break();
-				yield return new WaitForSeconds(.1f);
-				yield return null;
-				*/
-				}
+
+                if (terrainScript.checkAroundDebug)
+                { //then we want to pause the editor for viewing
+                    Debug.Break();
+                    yield return new WaitForSeconds(.1f);   //this is how long we are displaying the around data
+                }
+            }
 
 			if(totalCounter > checkAroundPathWait){
 				totalCounter = 0;
@@ -1848,64 +1802,42 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 
         //so need a way to tell if from diggign terrain or something
 
-		if (!singleBlock)
-        {//then this is terrain removal, so add back in our original block
-            //this appears to run fine, when blocks are dug, they are no longer removed, creates more single pieces though
-            Debug.Log("Terrain removal add origina block " + thisPosition);
-            if(checkStrPos.Contains(thisPosition)){
-                //checkStrPos.Remove(thisPosition);
-                //checkStrGo.Remove(thisPosition);
-                
-                Debug.Log("Somehow we are on the list and shoundlt be " + thisPosition);
-                Debug.Break();
-                //this is annoying find out how it is getting on the list
-                //otherwise we have to do some complicated stuff to get it, since may be multiple thisPos and multiple gameO on the list
-            }
+		if (!singleBlock){//then this is terrain removal, so add original block back in our original block
+            //this appears to run fine, when blocks are dug, they are no longer removed, creates more single pieces though need to fix that
             checkStrPos.Add(thisPosition);///later this is for when we recheck the strength for these blocks
             checkStrGo.Add(gameObject);
 
-        } else
-        {//this is normal block destruction so remove original block
-            Debug.Log("This is a single block so dont add it, keep removed" + thisPosition + " then count " + checkStrPos.Count);
+        } 
+		//Debug.Log("All aroundBlocks found in " + (Time.realtimeSinceStartup - beginTime) + " and total checks"  + fullCounter);
+		
+		gettingAllMissing = false;
 
-            //for(int u = 0; u < checkStrPos.Count; u++){
-                //Debug.Log("On list " + checkStrPos[u]);
-                
-            //}
-            //make sure our original is not on the list
-            if(checkStrPos.Contains(thisPosition)){
-                //checkStrPos.Remove(thisPosition);
-                //checkStrGo.Remove(thisPosition);
+        //now we should have all blocks that have been effected by this removal	so we can start to find new strengths
 
+        if (terrainScript.zeroStrengthDebug){
+            //so here we debug all effected blocks before we start checkign their strengths again
+            for (int x = 0; x < chunkAroundPos.Count; x++){
 
+                if (chunkAroundGo[x] == gameObject){
+                    terrainScript.DebugCube(chunkAroundPos[x] * 3, transform.position, .7f, Color.cyan, .1f);
+                   // Debug.Log("Around info collected for checkAroundPath, see inspector");                    
+                }
+                else {
+                    terrainScript.DebugCube(chunkAroundPos[x] * 3,chunkAroundGo[x].transform.position, .7f, Color.green, .1f);
+                    //Debug.Log("Green cubes are blocks not ours");
+                }
+             }
 
-                Debug.Log("Somehow we are on the list and shoundlt be " + thisPosition);
-                Debug.Break();
-                //this is annoying find out how it is getting on the list
-                //otherwise we have to do some complicated stuff to get it, since may be multiple thisPos and multiple gameO on the list
-            }
-            else{
-
-            }
-
+            Debug.Log("ALL EFFECTED all str set to zero " + checkStrGo.Count + "this is number of effected blocks " + chunkAroundPos.Count);
+            Debug.Break();
+            yield return new WaitForSeconds(.1f);
         }
 
 
 
-		//Debug.Log("All aroundBlocks found in " + (Time.realtimeSinceStartup - beginTime) + " and total checks"  + fullCounter);
-		
-		gettingAllMissing = false;
-		
-		//now we should have all blocks that have been effected by this removal	so we can start to find new strengths\\
-		//Debug.Log("RED ALL EFFECTED all str set to zero " + checkStrGo.Count + "this is number of effected blocks " + chunkAroundPos.Count);
-		////STRDEBUG
-		//Debug.Break();
-		//Debug.Log("check all surrounding array chunkAroundPos");
-		//yield return null;
-		//yield return new WaitForSeconds(.11f);
-		////
-					
-		otherUpdateChunks.Clear();	
+        Debug.Log("Starting strength checks ");
+
+        otherUpdateChunks.Clear();	
 		chunkAroundPos.Clear();
 		chunkAroundGo.Clear();
 			
@@ -1914,6 +1846,7 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		
 		//now go through the list of chunks that need to have their strength updated and make them recheck
 		//right now it goes back and forth and keep checking parts, until it hits a wave with no strength
+        //there must be a better way, but works for new, there are configurations in which this might leave floating blocks
 
 		beginTime = Time.realtimeSinceStartup;
 
@@ -1928,11 +1861,57 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 			fullCounter +=1;
 
 			if(checkStrGo[x] == gameObject){
+
 				waitUpdated = BlockStr(checkStrPos[x], false);
+
+
+                if (waitUpdated == 1 && terrainScript.findStrengthDebug) {
+                    terrainScript.DebugCube(checkStrPos[x] * 3, transform.position, .7f, Color.magenta, .1f);
+                    /*
+                    for (int i = 0; i < 6; x++)
+                    {
+                       
+                        if (terrainScript.findStrengthAroundDebug)
+                        {
+
+                            //so this is visual debugging for around checks and what information we are finding 
+
+                            if (checkStrGo[i] == gameObject)
+                            {//checking between two blocks we own	
+                                if (blockStr[(int)checkStrPos[i].x, (int)checkStrPos[i].y, (int)checkStrPos[i].z].strength != 0)
+                                {
+                                    terrainScript.DebugCube(checkStrPos[i] * 3, checkStrGo[x].transform.position, 1, Color.yellow, .1f);
+                                }
+                                else {
+                                    terrainScript.DebugCube(checkStrPos[i] * 3, checkStrGo[x].transform.position, 1, Color.white, .1f);
+                                }
+                            }
+                            else {
+                                BlockStrength thisBlockScript = checkStrGo[i].GetComponent<BlockStrength>() as BlockStrength;
+
+                                if (thisBlockScript.blockStr[(int)checkStrPos[i].x, (int)checkStrPos[i].y, (int)checkStrPos[i].z].strength != 0)
+                                {
+                                    terrainScript.DebugCube(checkStrPos[i] * 3, checkStrGo[i].transform.position, 1, Color.yellow, .1f);
+                                }
+                                else {
+                                    terrainScript.DebugCube(checkStrPos[i] * 3, [i].transform.position, 1, Color.white, .1f);
+                                }
+                            }
+                            //Debug.Break();
+                        }
+                       
+                    }
+                    */
+                    }
+
+
+
 				localCounter += waitUpdated;
 				blocksUpdated += waitUpdated;
 
-				}
+                
+
+            }
 			else{
 				if(terrainScript.strDebug){
 					Debug.Log("Checking block on other chunk ");
@@ -1946,8 +1925,13 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 				while(blockScript.doingStrength){
 					yield return new WaitForSeconds(.001f);
 					}
-				
-				if(terrainScript.strDebug){
+
+                if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                {
+                    terrainScript.DebugCube(checkStrPos[x] * 3, checkStrGo[x].transform.position, .7f, Color.magenta, .1f);
+                }
+
+                if (terrainScript.strDebug){
 					Debug.Log("Returning from the check on update str ");
 					}
 				
@@ -1965,15 +1949,16 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 			}
 
 
-		
-		
-		//Debug.Log("Total BLocks updated on first set of checks " + blocksUpdated);
+        if (terrainScript.findStrengthDebug) { 
 
+            Debug.Log("Total BLocks updated on first set of checks " + blocksUpdated);
+           // Debug.Break();
+          //  yield return new WaitForSeconds(.1f);
+            
+        }
 
+        //really should condense this and put into a while loop, just the debugging is so annoying
 
-		if(terrainScript.strDebug){
-			Debug.Log("Getting through first set of strength checks ");
-			}
 		if(blocksUpdated != 0){//do another check of these
 
 			blocksUpdated = 0;
@@ -1989,7 +1974,12 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 					waitUpdated =  BlockStr(checkStrPos[x], false);
 					localCounter += waitUpdated;
 					blocksUpdated += waitUpdated;
-					}
+
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, transform.position, .7f, Color.magenta, .1f);
+                        }
+                    }
 				}
 			else{
 				if(terrainScript.strDebug){
@@ -2002,7 +1992,12 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 					waitUpdated = blockScript.BlockStr(checkStrPos[x], false);
 					localCounter += waitUpdated;
 					blocksUpdated += waitUpdated;
-					}
+
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, checkStrGo[x].transform.position, .7f, Color.magenta, .1f);
+                        }
+                    }
 				
 				while(blockScript.doingStrength){
 					yield return new WaitForSeconds(.001f);
@@ -2025,8 +2020,17 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		
 			}
 
-		}
-		else{
+            if (terrainScript.findStrengthDebug)
+            {
+                Debug.Log("Total BLocks updated on second set of checks " + blocksUpdated);
+                //Debug.Break();
+                //yield return new WaitForSeconds(.1f);
+                
+            }
+
+
+        }
+        else {
 		
 			collectZeros = true;
 		}
@@ -2049,7 +2053,12 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 						localCounter += waitUpdated;
 						blocksUpdated += waitUpdated;
 
-					}
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, transform.position, .7f, Color.magenta, .1f);
+                        }
+
+                    }
 				}
 				//}
 				else{
@@ -2064,7 +2073,12 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 						while(blockScript.doingStrength){
 							yield return new WaitForSeconds(.001f);
 						}
-					}
+
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, checkStrGo[x].transform.position, .7f, Color.magenta, .1f);
+                        }
+                    }
 				}
 				
 				if(localCounter > strCheckWait){
@@ -2072,16 +2086,28 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 					yield return null;
 				}
 			}
-			
-			//Debug.Log("Total BLocks updated on third set of checks " + blocksUpdated);
-		}
-		else{
+
+            if (terrainScript.findStrengthDebug)
+            {
+                Debug.Log("Total BLocks updated on 3rd set of checks " + blocksUpdated);
+                //Debug.Break();
+                //yield return new WaitForSeconds(.1f);
+                
+            }
+
+
+            //Debug.Log("Total BLocks updated on third set of checks " + blocksUpdated);
+        }
+        else {
 
 			collectZeros = true;
 		}
 
-		//so here is blocks updated == 0, then we need to just finish and collect all spots that dont have a str value...
-		if(blocksUpdated != 0){
+        //Debug.Log("Getting through 3rd set of strength checks ");
+
+        //so here is blocks updated == 0, then we need to just finish and collect all spots that dont have a str value...
+        if (blocksUpdated != 0){
+
 			blocksUpdated = 0;
 		
 			//on this last set of checks we will collect any positions that dont have any strength...
@@ -2098,7 +2124,13 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 						localCounter += waitUpdated;
 						blocksUpdated += waitUpdated;
 
-					if(blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, transform.position, .7f, Color.magenta, .1f);
+                        }
+                    
+
+                    if (blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
 						chunkPassPos.Add(checkStrPos[x]);
 						chunkPassGo.Add(checkStrGo[x]);
                         Debug.Log("Adding this position " + checkStrPos[x]);
@@ -2119,7 +2151,12 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 						yield return new WaitForSeconds(.001f);
 						}
 
-					if(blockScript.blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
+                        if (waitUpdated == 1 && terrainScript.findStrengthDebug)
+                        {
+                            terrainScript.DebugCube(checkStrPos[x] * 3, checkStrGo[x].transform.position, .7f, Color.magenta, .1f);
+                        }
+
+                        if (blockScript.blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
 						chunkPassPos.Add(checkStrPos[x]);
 						chunkPassGo.Add(checkStrGo[x]);
                             Debug.Log("Adding this position " + checkStrPos[x]);
@@ -2134,12 +2171,25 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 				}
 			}
 
-		//Debug.Log("Total BLocks updated on fourth final set of checks " + blocksUpdated);
-	
-		}
+            if (terrainScript.findStrengthDebug)
+            {
+                Debug.Log("Total BLocks updated on final set of checks " + blocksUpdated);
+                //Debug.Break();
+               // yield return new WaitForSeconds(.1f);
+                
+            }
+
+            //Debug.Log("Total BLocks updated on fourth final set of checks " + blocksUpdated);
+
+        }
 		else{
 			collectZeros = true;
 			}
+
+        int bCounter = 0;
+        int zCounter = 0;
+
+       // Debug.Log("Element be checked for zeroes " + checkStrPos.Count);
 
 		if(collectZeros){
 
@@ -2150,16 +2200,18 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 				
 				if(checkStrGo[x] == gameObject){
 
-
 					if(blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
 
                         if(checkStrPos[x] == thisPosition){
-
-                            Debug.Log("This could be our problems");
+                            //Debug.Log("This could be our problems");
                             }
+                        zCounter += 1;
 						chunkPassPos.Add(checkStrPos[x]);
 						chunkPassGo.Add(checkStrGo[x]);
 					}
+                    else {
+                        bCounter += 1;
+                    }
 				}
 				else{
 					blockScript = checkStrGo[x].GetComponent<BlockStrength>() as BlockStrength;
@@ -2167,12 +2219,16 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 					if(blockScript.blockStr[(int)checkStrPos[x].x, (int)checkStrPos[x].y, (int)checkStrPos[x].z].strength == 0){
 						chunkPassPos.Add(checkStrPos[x]);
 						chunkPassGo.Add(checkStrGo[x]);
-
+                        zCounter += 1;
                         if(checkStrPos[x] == thisPosition){
                             
-                            Debug.Log("This could be our problems");
+                            //Debug.Log("This could be our problems");
                         }
 					}
+                    else
+                    {
+                        bCounter += 1;
+                    }
 				}
 				}
 			}
@@ -2180,7 +2236,7 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 
 		checkingNewStrength = false;	
 
-		//Debug.Log(" Including wait every " + strCheckWait +  " checks");
+		//Debug.Log("Found blocks with strength " + bCounter + " and with zero " + zCounter);
 		//Debug.Log("Done and strength checks in " + (Time.realtimeSinceStartup - beginTime) + " " + fullCounter);
 
 		//for now, with wanting to see strengths we need to just have them re-rendered if they were checked for
@@ -2205,7 +2261,6 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		else{//if the list doesnt have anything on it, then we need to add to otherupdateChunks so other 
 			//objects get rendered...
 
-
 			for(int x = checkStrGo.Count -1; x > -1; x--){
 				//so if our working list of effected gameobjects is not on the re-render list, then add it
 				if (checkStrGo[x] != gameObject && !terrainScript.updateSolidPiece.Contains(checkStrGo[x])){
@@ -2220,8 +2275,25 @@ public IEnumerator UpdateStrength(Vector3 thisPosition, bool foundationCheck, bo
 		}
 
 		checkStrPos.Clear();
-		checkStrGo.Clear();
+        checkStrGo = checkStrGo.Distinct().ToList();
+        for (int x = checkStrGo.Count - 1; x > -1; x--)        {
+            //so for each effected chunk, if it has water then it needs to be recalculated
+            if (checkStrGo[x].GetComponent<ChunkScript>().surfaceSimulated)
+            {//to reduce checks only chekc them if their sufrace has been prepped for water and not already being simulated
+                if (!terrainScript.waterScript.currentChunks.Contains(checkStrGo[x]))
+                {
+                    terrainScript.waterScript.currentChunks.Add(checkStrGo[x]);
+                }
+
+            }
+        }
+
+        //Debug.Log("Should have check water for all these chunks " + checkStrGo.Count);
+        //Debug.Break();
+        checkStrGo.Clear();
 		updatingStrength = false;
+        Debug.Log("Did update strength at " + thisPosition + " number of zeros found " + chunkPassPos.Count);
+        
 	}
 	
 	
@@ -2681,6 +2753,9 @@ public IEnumerator UpdateStrengthMulti(){//bool fromTerrain
 	
 public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 	
+    //so thisPosition has already been set to zero, then we check all those around us to see who is 
+    //missing their path, if we were their path then they get added to arrays for rechecking
+
 	//probably need to cleanup these local variables for garbage collection
 	//Debug.Log("Called from " + caller.transform.position);
 	doingPath = true;
@@ -2702,36 +2777,45 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 			
 	for(int x = 0; x < 6; x++){
 			
-	//	if(terrainScript.strDebug){
+		if(terrainScript.checkAroundDebug){
 
 	//so this is visual debugging for around checks and what information we are finding 
 
-//		if(chunkParent[x] == gameObject){//checking between two blocks we own	
-//			if(blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z][0] != 0){
-//				terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.green, .1f);
-//				}
-//			else{
-//				terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.blue, .1f);	
-//				}
-//			}
-//		else{
-//			thisBlockScript = chunkParent[x].GetComponent<BlockStrength>() as BlockStrength;	
-//			//if (	
-//			if(thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z][0] != 0){
-//				terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.green, .1f);
-//				}
-//			else{
-//				terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.green, .1f);
-//				}
-//			}
-	//		}
+		if(chunkParent[x] == caller){//checking between two blocks we own	
+			if(blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength != 0){
+				terrainScript.DebugCube(chunkPosition[x] * 3,chunkParent[x].transform.position, 1, Color.yellow, .1f);
+				}
+			else{
+				terrainScript.DebugCube(chunkPosition[x] * 3, chunkParent[x].transform.position, 1, Color.white, .1f);	
+				}
+			}
+		else{
+			thisBlockScript = chunkParent[x].GetComponent<BlockStrength>() as BlockStrength;	
+				
+			if(thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength != 0){
+				terrainScript.DebugCube(chunkPosition[x] * 3,chunkParent[x].transform.position, 1, Color.yellow, .1f);
+				}
+			else{
+				terrainScript.DebugCube(chunkPosition[x] * 3,chunkParent[x].transform.position, 1, Color.white, .1f);
+				}
+			}
+           //Debug.Break();
+		}
 		
 		
 		if(chunkParent[x] == gameObject){//checking against block we own
-				
-			//terrainScript.DebugCube(chunkPosition[x],transform.position, 1, Color.red, .1f);
-			//bhange
-				if(blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength == 0){
+
+                //terrainScript.DebugCube(chunkPosition[x],transform.position, 1, Color.red, .1f);
+                //bhange
+
+                //if (chunkPosition[x] == new Vector3(10, 15, 13))
+                //{
+               //     //bdebug
+                    //Debug.Log("Position (10,15,13) checkaroundpath " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength + "in direction " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].direction + " length " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].length);
+                    //Debug.Break();
+                //}
+
+                if (blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength == 0){
 					
 					continue;//if the block has no strength then there is nothing to check
 				}
@@ -2772,10 +2856,18 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 			//is this returns Vector3.zero then the position is within our chunk...
 				
 			if(chunkOffset == Vector3.zero){//then this position is within our block 
-				//bhange
-				if(blockStr[(int)combined.x, (int) combined.y, (int) combined.z].strength == 0){//then our first path is null and we need to be rechecked
+                                            //bhange
 
-				//if(blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0] == 0){//then our first path is null and we need to be rechecked
+                if (combined == new Vector3(10, 15, 13))
+                {
+                    //bdebug
+                    Debug.Log("Position (10,15,13) first path " + combined + " with strength " + blockStr[(int)combined.x, (int)combined.y, (int)combined.z].strength);
+                    //Debug.Break();
+                }
+
+                    if (blockStr[(int)combined.x, (int) combined.y, (int) combined.z].strength == 0){//then our first path is null and we need to be rechecked
+
+				//if(blockStr[(int)compathbined.x, (int) combined.y, (int) combined.z][0] == 0){//then our first path is null and we need to be rechecked
 					
 					if(caller == gameObject){//then we add to our own list
 						//this was causing problems, since a chunk can have the same position just a different parent on tall buildings...
@@ -2792,9 +2884,18 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 							//tricky dicky...so we need to go through the list and find this position, and see if the parent at this index is different...
 								
 							}
-						
-						}
-					else{//this is not called from our gameobject, so add to their lists
+
+                            //if (chunkPosition[x] == new Vector3(10, 15, 13))
+                            //{
+                                //bdebug
+                                //Debug.Log("Position (10,15,13) is getting added to list, missing anchor");
+                                //Debug.Break();
+                            //}
+
+
+
+                        }
+                        else {//this is not called from our gameobject, so add to their lists
 						
 						thisBlockScript = caller.GetComponent<BlockStrength>() as BlockStrength;
 						if(!thisBlockScript.chunkAroundPos.Contains(chunkPosition[x])){
@@ -2803,15 +2904,29 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 							thisBlockScript.checkStrPos.Add(chunkPosition[x]);///later this is for when we recheck the strength for these blocks
 							thisBlockScript.checkStrGo.Add(chunkParent[x]);	
 							}
-						}
-						
-					}
-				else{ 
-					//terrainScript.DebugCube(chunkPosition[x],transform.position, 1.2f, Color.yellow, .1f);
-					//Debug.Log("Finding path " + chunkPosition[x] + " " + combined + " " + blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0]);
-					//Debug showing that this still has a path	
-					//Debug.DrawLine(transform.position + combined + Vector3.right, (transform.position + combined + (Vector3.up + -Vector3.right + Vector3.forward) * 1.2f), Color.red, 1.25f);	
-					}
+
+                            //if (chunkPosition[x] == new Vector3(10, 15, 13))
+                           // {
+                                //bdebug
+                            //    Debug.Log("Position (10,15,13) is getting added to list, missing anchor");
+                                //Debug.Break();
+                           // }
+
+                        }
+
+                    }
+				else{
+                       // if (combined == new Vector3(10, 15, 13))
+                        //{
+                            //bdebug
+                            //Debug.Log("Position (10,15,13) first path is coming up valid");
+                            //Debug.Break();
+                        //}
+                        //terrainScript.DebugCube(chunkPosition[x],transform.position, 1.2f, Color.yellow, .1f);
+                        //Debug.Log("Finding path " + chunkPosition[x] + " " + combined + " " + blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0]);
+                        //Debug showing that this still has a path	
+                        //Debug.DrawLine(transform.position + combined + Vector3.right, (transform.position + combined + (Vector3.up + -Vector3.right + Vector3.forward) * 1.2f), Color.red, 1.25f);	
+                    }
 					
 					
 					
@@ -2825,8 +2940,8 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 					
 				tempPos =((combined * 3) + transform.position - thisChunk.transform.position)/3;//this converts to local to this other chunk
 					//bhange
-                    Debug.Log("tempPos " + tempPos + " " + thisChunk.transform.position + " " + transform.position + " " + combined);
-                    Debug.Break();
+                   // Debug.Log("tempPos " + tempPos + " " + thisChunk.transform.position + " " + transform.position + " " + combined);
+                    //Debug.Break();
                     if(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength == 0){//then this is missing path
 					//if(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z][0] == 0){//then this is missing path
 						//terrainScript.DebugCube(chunkPosition[x], chunkParent[x].transform.position, 1.2f, Color.red, .1f);
@@ -2843,11 +2958,24 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 						thisBlockScript.checkStrPos.Add(chunkPosition[x]);///later this is for when we recheck the strength for these blocks
 						thisBlockScript.checkStrGo.Add(chunkParent[x]);	
 						}
-					}
+
+                        //if (tempPos == new Vector3(10, 15, 13))
+                        //{
+                            //bdebug
+                            //Debug.Log("Position (10,15,13) first path is bad adding to list");
+                            //Debug.Break();
+                        //}
+                    }
 					else{
-						//terrainScript.DebugCube(chunkPosition[x], chunkParent[x].transform.position, 1.2f, Color.yellow, .1f);
-						Debug.Log("Finding path this pos " + tempPos + " has path " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength);
-						}
+                        //if (tempPos == new Vector3(10, 15, 13))
+                        //{
+                            //bdebug
+                            //Debug.Log("Position (10,15,13) first path is coming up valid");
+                            //Debug.Break();
+                        //}
+                        //terrainScript.DebugCube(chunkPosition[x], chunkParent[x].transform.position, 1.2f, Color.yellow, .1f);
+                        //Debug.Log("Finding path this pos " + tempPos + " has path " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength);
+                    }
 				}
 				//Debug.Break();
 				
@@ -2857,13 +2985,21 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 				/*
 				So there is where the problem must be, we are not finding invalid paths, when checking between two chunks we dont own
 				*/
-				thisBlockScript = chunkParent[x].GetComponent<BlockStrength>() as BlockStrength; 
-			//	Debug.Log("SO original gen array position " + chunkScript.gameObject.transform.position + " " + chunkScript.GeneratorArrayPosition);
+				thisBlockScript = chunkParent[x].GetComponent<BlockStrength>() as BlockStrength;
+                //	Debug.Log("SO original gen array position " + chunkScript.gameObject.transform.position + " " + chunkScript.GeneratorArrayPosition);
 
-			//	Debug.Log(chunkParent[x].transform.position + " " + x + " " + chunkPosition[x] + " " + thisBlockScript.initialized);
-			//	Debug.Log("This position we are checking around " + thisPosition);
-				//bhange
-				if(thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength == 0){
+                //	Debug.Log(chunkParent[x].transform.position + " " + x + " " + chunkPosition[x] + " " + thisBlockScript.initialized);
+                //	Debug.Log("This position we are checking around " + thisPosition);
+                //bhange
+
+               // if (chunkPosition[x] == new Vector3(10, 15, 13))
+              //  {
+                    //bdebug
+                   // Debug.Log("Position (10,15,13) checkaroundpath " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength + "in direction " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].direction + " length " + blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].length);
+                    //Debug.Break();
+               // }
+
+                if (thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength == 0){
 					continue;//if the block has no strength then there is nothing to check
 				}
 				if(thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].strength == 8 && thisBlockScript.blockStr[(int)chunkPosition[x].x, (int)chunkPosition[x].y, (int)chunkPosition[x].z].length == 0){
@@ -2909,7 +3045,7 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 				//if(thisBlockScript.blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0] == 0){//then our first path is null and we need to be rechecked
 				//	Debug.Log("Within other chunk");
 					//terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.red, .1f);
-					if(caller = gameObject){//then we add to our own list
+					if(caller == gameObject){//then we add to our own list
 					//	Debug.Log("we called this");
 						chunkAroundPos.Add(chunkPosition[x]);//this is list for blocks that need to check around themselves
 						chunkAroundGo.Add(chunkParent[x]);
@@ -2924,12 +3060,26 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 						thisBlockScript.checkStrPos.Add(chunkPosition[x]);///later this is for when we recheck the strength for these blocks
 						thisBlockScript.checkStrGo.Add(chunkParent[x]);	
 						}
-						
-					}
+
+                       // if (chunkPosition[x] == new Vector3(10, 15, 13))
+                       // {
+                            //bdebug
+                           // Debug.Log("Position (10,15,13) first path is bad adding to list");
+                            //Debug.Break();
+                        //}
+
+                    }
 					else{
-						//terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.yellow, .1f);	
-						//Debug.Log("Finding path " + chunkPosition[x] + " " + combined + " " + thisBlockScript.blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0]);
-						}
+                        //if (chunkPosition[x] == new Vector3(10, 15, 13))
+                        //{
+                            //bdebug
+                          //  Debug.Log("Position (10,15,13) first path all good");
+                            //Debug.Break();
+                        ///}
+
+                        //terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.yellow, .1f);	
+                        //Debug.Log("Finding path " + chunkPosition[x] + " " + combined + " " + thisBlockScript.blockStr[(int)combined.x, (int) combined.y, (int) combined.z][0]);
+                    }
 					
 					
 					
@@ -2956,8 +3106,8 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 				//Debug.Log("Using as first path... " + (combined + chunkParent[x].transform.position - terrainScript.renderChunks[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].transform.position) + " on " + thisChunk);
                 tempPos =  ((combined * 3) + chunkParent[x].transform.position - thisChunk.transform.position)/3;//chunkPosition[x];//combined + transform.position - thisChunk.transform.position;//this converts to local to this other chunk
 
-                Debug.Log("Taking final point * 3 " + (combined * 3) + "added to parent " + thisChunk.transform.position + " then subtract out final chunk " + chunkParent[x].transform.position); 
-                    Debug.Log("So this should be the same as thisChunk " + chunkPosition[x]);
+                //Debug.Log("Taking final point * 3 " + (combined * 3) + "added to parent " + thisChunk.transform.position + " then subtract out final chunk " + chunkParent[x].transform.position); 
+                    //Debug.Log("So this should be the same as thisChunk " + chunkPosition[x]);
                     /*
                     if(tempPos.x > 15){
 						
@@ -2990,36 +3140,38 @@ public void CheckAroundPath(GameObject caller, Vector3 thisPosition){
 
 					//Debug.Log(tempPos + " " + x + " " + thisChunk + " " + chunkPosition[x] + " " + chunkParent[x]);
 					//bhange
-					Debug.Log("Around check on other chunk " + chunkPosition[x] + " " + chunkParent[x].transform.position);//
+					//Debug.Log("Around check on other chunk " + chunkPosition[x] + " " + chunkParent[x].transform.position);//
                     //so these positions are right about at this debug, somethign is gosing wrong though
-					Debug.Log("Checking this position  " + tempPos + " position on " + thisChunk.transform.position + " " + combined);	
-                    Debug.Log("Should this be the stop " + (tempPos/3) + " original " + combined);
+					//Debug.Log("Checking this position  " + tempPos + " position on " + thisChunk.transform.position + " " + combined);	
+                   // Debug.Log("Should this be the stop " + (tempPos/3) + " original " + combined);
 					if(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength == 0){//then this is missing path
 					//if(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z][0] == 0){//then this is missing path
 						//terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.red, .1f);
-						Debug.Log("This path has no strength and should be added");
-						Debug.Log(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength + " " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].direction);
+						//Debug.Log("This path has no strength and should be added");
+						//Debug.Log(thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength + " " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].direction);
 						if(caller == gameObject){//then we add to our own list
-							Debug.Log(" CAller position " + caller.transform.position);
-							Debug.Log("Adding to ourselves" + gameObject.transform.position + " at " + chunkPosition[x] + " on " + chunkParent[x].transform.position);
+							//Debug.Log(" CAller position " + caller.transform.position);
+							//Debug.Log("Adding to ourselves" + gameObject.transform.position + " at " + chunkPosition[x] + " on " + chunkParent[x].transform.position);
 							chunkAroundPos.Add(chunkPosition[x]);//this is list for blocks that need to check around themselves
 							chunkAroundGo.Add(chunkParent[x]);
 							checkStrPos.Add(chunkPosition[x]);///later this is for when we recheck the strength for these blocks
 							checkStrGo.Add(chunkParent[x]);
 						}
 						else{//this is not called from our gameobject, so add to their lists
-							Debug.Log("This path has no strength and should be added");
-							Debug.Log("Adding  to other list " + caller.transform.position + " at " + chunkPosition[x] + " on " + chunkParent[x].transform.position);
+							//Debug.Log("This path has no strength and should be added");
+							//Debug.Log("Adding  to other list " + caller.transform.position + " at " + chunkPosition[x] + " on " + chunkParent[x].transform.position);
 							thisBlockScript = caller.GetComponent<BlockStrength>() as BlockStrength;
 							thisBlockScript.chunkAroundPos.Add(chunkPosition[x]);//this is list for blocks that need to check around themselves
 							thisBlockScript.chunkAroundGo.Add(chunkParent[x]);
 							thisBlockScript.checkStrPos.Add(chunkPosition[x]);///later this is for when we recheck the strength for these blocks
 							thisBlockScript.checkStrGo.Add(chunkParent[x]);	
 						}
-					}
+                        
+                    }
 					else{
-						//terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.yellow, .1f);	
-						Debug.Log("Finding path from "  + chunkPosition[x] + " to " + tempPos + " in direction of " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].direction + " with strength of " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength);
+                        
+                        //terrainScript.DebugCube(chunkPosition[x],chunkParent[x].transform.position, 1, Color.yellow, .1f);	
+                        //Debug.Log("Finding path from "  + chunkPosition[x] + " to " + tempPos + " in direction of " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].direction + " with strength of " + thisBlockScript.blockStr[(int)tempPos.x, (int)tempPos.y,  (int)tempPos.z].strength);
 						}
 				}
 				
